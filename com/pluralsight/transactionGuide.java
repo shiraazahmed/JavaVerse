@@ -8,7 +8,7 @@ public class transactionGuide {
     public static List<transaction> readTransactions() {
         List<transaction> transactions = new ArrayList<>();
         File file = new File(fileName);
-        if (!file.exists()) return transactions; //// No file yet? Return empty list
+        if (file.exists()) return transactions; //// No file yet? Return empty list
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
