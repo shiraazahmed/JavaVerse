@@ -55,7 +55,7 @@ public class transactionTrackerApp {
         String c = sc.nextLine();
         LocalDate now = LocalDate.now();
         switch (c) {
-            case "1" -> print(txns.stream().filter(t -> t.getDate().getMonth() == now.getMonth() && t.getDate().getYear() == now.getYear()).toList());
+            case "1" -> print(txns.stream().filter(t -> t.getDate().getMonth() == now.getMonth() & t.getDate().getYear() == now.getYear()).toList());
             case "2" -> {
                 LocalDate first = now.withDayOfMonth(1), lastMonth = first.minusMonths(1);
                 print(txns.stream().filter(t -> !t.getDate().isBefore(lastMonth) && t.getDate().isBefore(first)).toList());
@@ -63,6 +63,7 @@ public class transactionTrackerApp {
             case "3" -> print(txns.stream().filter(t -> t.getDate().getYear() == now.getYear()).toList());
             case "4" -> print(txns.stream().filter(t -> t.getDate().getYear() == now.getYear() - 1).toList());
             case "5" -> {
+                //-> defines anonymous functions
                 System.out.print("Vendor: ");
                 String v = sc.nextLine().toLowerCase();
                 print(txns.stream().filter(t -> t.getVendor().toLowerCase().contains(v)).toList());
