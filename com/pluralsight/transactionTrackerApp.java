@@ -1,78 +1,116 @@
 package com.pluralsight;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.*;
-// The main CLI application class
+
 public class transactionTrackerApp {
+    private static final Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        while (true) { // Main loop
-            System.out.println("Bank CLI | D=Deposit P=Payment L=Ledger E=Exit");
-            System.out.print("Enter your choice: ");
-            switch (scanner.nextLine().trim().toUpperCase()) {
-                //allow you to pass behavior (functions) as parameters.
-                case "D" -> addTransaction(scanner, true);
-                case "P" -> addTransaction(scanner, false);
-                case "L" -> showLedger(scanner);
-                case "E" -> { System.out.println("Thank you, Please come again!"); return; }
-                default -> System.out.println("Invalid choice.");
-            }
-        }
-    }
-    // Prompts the user for transaction data and saves it
-    private static void addTransaction(Scanner scanner, boolean isDeposit) {
-        System.out.print("Description: "); String desc = scanner.nextLine();
-        System.out.print("Vendor: "); String vendor = scanner.nextLine();
-        System.out.print("Amount: "); double amount = Double.parseDouble(scanner.nextLine());
-        if (!isDeposit) amount = -Math.abs(amount); // Ensure withdrawals are negative
-        transaction transaction = new transaction(LocalDate.now(), LocalTime.now(), desc, vendor, amount);
-        transactionGuide.saveTransaction(transaction);
-        System.out.println("Saved!");
-    }
-    // Displays the ledger menu and handles filter options
-    private static void showLedger(Scanner scanner) {
-        List<transaction> all = transactionGuide.readTransactions();
-        // Sort transactions from newest to oldest
-        all.sort(Comparator.comparing(transaction::getDate).reversed().thenComparing(transaction::getTime).reversed());
         while (true) {
-            System.out.println("Ledger: A=All D=Deposits P=Payments R=Reports H=Home");
-            System.out.print("Choice: ");
-            switch (scanner.nextLine().trim().toUpperCase()) {
-                case "A" -> print(all);
-                case "D" -> print(all.stream().filter(transaction -> transaction.getAmount() > 0).toList());
-                case "P" -> print(all.stream().filter(transaction -> transaction.getAmount() < 0).toList());
-                case "R" -> showReports(scanner, all);
-                case "H" -> { return; }
-                default -> System.out.println("Not available.");
+            System.out.println("Home Menu:");
+            System.out.println("D) Add Deposit");
+            System.out.println("P) Make Payment (Debit)");
+            System.out.println("L) Ledger");
+            System.out.println("E) Exit");
+            System.out.print("Choose Choice: ");
+            String choice = scanner.nextLine().toUpperCase();
+
+            switch (choice) {
+                case "D": addTransaction(true); break;
+                case "P": addTransaction(false); break;
+                case "L": showLedger(); break;
+                case "E": System.exit(0);
+                default: System.out.println("Invalid Choice, Try Again!.");
             }
         }
     }
 
-    private static void showReports(Scanner scanner, List<transaction> transactions) {
-        // Handles the reports submenu
-        System.out.println("\nReports: 1=MTD 2=PrevMonth 3=YTD 4=PrevYear 5=ByVendor 0=Back");
-        String c = scanner.nextLine();
-        LocalDate now = LocalDate.now();
-        switch (c) {
-            case "1" -> print(transactions.stream().filter(transaction -> transaction.getDate().getMonth() == now.getMonth() & transaction.getDate().getYear() == now.getYear()).toList());
-            case "2" -> {
-                LocalDate first = now.withDayOfMonth(1), lastMonth = first.minusMonths(1);
-                print(transactions.stream().filter(transaction -> !transaction.getDate().isBefore(lastMonth) && transaction.getDate().isBefore(first)).toList());
-            }
-            case "3" -> print(transactions.stream().filter(transaction -> transaction.getDate().getYear() == now.getYear()).toList());
-            case "4" -> print(transactions.stream().filter(transaction -> transaction.getDate().getYear() == now.getYear() - 1).toList());
-            case "5" -> {
-                //-> defines anonymous functions
-                System.out.print("Vendor: ");
-                String variable = scanner.nextLine().toLowerCase();
-                print(transactions.stream().filter(transaction -> transaction.getVendor().toLowerCase().contains(variable)).toList());
+    private static void addTransaction(boolean isDeposit) {
+        System.out.print("Description: ");
+        String description = scanner.nextLine();
+        System.out.print("Vendor: ");
+        String vendor = scanner.nextLine();
+        System.out.print("Amount: ");
+        double amount = Double.parseDouble(scanner.nextLine());
+
+        if (!isDeposit) amount = -Math.abs(amount);  // Ensure negative for payments
+
+        transaction transaction = new transaction(LocalDate.now(), LocalTime.now(), description, vendor, amount);
+        transactionGuide.writeTransaction(transaction);
+        System.out.println("Transaction Saved.");
+    }
+
+    private static void showLedger() {
+        List<transaction> transactions = transactionGuide.readTransactions();
+        transactions.sort(Comparator.comparing(transaction::getDate).thenComparing(t -> t.getDate()).reversed());
+
+        while (true) {
+            System.out.println("Ledger:");
+            System.out.println("A) All");
+            System.out.println("D) Deposits");
+            System.out.println("P) Payments");
+            System.out.println("R) Reports");
+            System.out.println("H) Home");
+            System.out.print("Choice: ");
+            String choice = scanner.nextLine().toUpperCase();
+
+            switch (choice) {
+                case "A": showFiltered(transactions, t -> true); break;
+                case "D": showFiltered(transactions, t -> t.getAmount() > 0); break;
+                case "P": showFiltered(transactions, t -> t.getAmount() < 0); break;
+                case "R": showReports(transactions); break;
+                case "H": return;
+                default: System.out.println("Invalid choice.");
             }
         }
     }
-// Prints a list of transactions in the CLI
-    private static void print(List<transaction> transactions) {
-        if (transactions.isEmpty()) System.out.println("No transactions.");
-        else transactions.forEach(System.out::println); //colons help me pass the function around as reference operator
+
+    private static void showFiltered(List<transaction> transactions, java.util.function.Predicate<transaction> filter) {
+        transactions.stream()
+                .filter(filter)
+                .sorted(Comparator.comparing(transaction::getDate).reversed())
+                .forEach(System.out::println);
+    }
+
+    private static void showReports(List<transaction> transactions) {
+        while (true) {
+            System.out.println("Reports:");
+            System.out.println("1) Month To Date");
+            System.out.println("2) Previous Month");
+            System.out.println("3) Year To Date");
+            System.out.println("4) Previous Year");
+            System.out.println("5) Search by Vendor");
+            System.out.println("0) Back");
+            System.out.print("Choice: ");
+            String choice = scanner.nextLine();
+
+            LocalDate now = LocalDate.now();
+
+            switch (choice) {
+                case "1": // Month to date
+                    showFiltered(transactions, t -> t.getDate().getMonth() == now.getMonth() && t.getDate().getYear() == now.getYear());
+                    break;
+                case "2": // Previous month
+                    YearMonth prevMonth = YearMonth.now().minusMonths(1);
+                    showFiltered(transactions, t -> YearMonth.from(t.getDate()).equals(prevMonth));
+                    break;
+                case "3": // Year to date
+                    showFiltered(transactions, t -> t.getDate().getYear() == now.getYear());
+                    break;
+                case "4": // Previous year
+                    showFiltered(transactions, t -> t.getDate().getYear() == now.getYear() - 1);
+                    break;
+                case "5": // Search by vendor
+                    System.out.print("Enter vendor name: ");
+                    String vendor = scanner.nextLine().toLowerCase();
+                    showFiltered(transactions, t -> t.getVendor().toLowerCase().contains(vendor));
+                    break;
+                case "0": return;
+                default: System.out.println("Invalid choice.");
+            }
+        }
     }
 }
+

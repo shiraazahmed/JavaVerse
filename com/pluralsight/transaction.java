@@ -26,7 +26,7 @@ public class transaction {
     }
     // Converts this transaction into a CSV-formatted string
     public String toCsv() {
-        return String.format("%s|%s|%s|%s|%.2f", date, time, description, vendor, amount);
+        return String.format("%s %s | %-20s | %-10s | %10.2f", date, time, description, vendor, amount);
     }
     // Returns a nicely formatted string for CLI display
     @Override
@@ -58,5 +58,25 @@ public class transaction {
 
     public String getDescription() {
         return description;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
     }
 }
