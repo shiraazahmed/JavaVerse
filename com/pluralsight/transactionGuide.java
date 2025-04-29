@@ -12,7 +12,7 @@ public class transactionGuide {
         List<transaction> transactions = new ArrayList<>();
         File file = new File(fileName);
         if (!file.exists()) return transactions;
-        
+
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             // Read each line until we reach the end of the file
@@ -36,8 +36,5 @@ public class transactionGuide {
         } catch (IOException e) {
             System.out.println("Error writing transaction: " + e.getMessage());
         }
-    }
-
-    public static void writeTransaction(transaction transaction) {
     }
 }
