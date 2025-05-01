@@ -4,15 +4,16 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.*;
 
-public class transactionTrackerApp {
+public class TransactionTrackerApp {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         showMainMenu();
     }
+
     private static void showMainMenu() {
         while (true) {
-            System.out.println("====Main Menu:====");
+            System.out.println("===Welcome to Our Main Menu===");
             System.out.println("D) Add Deposit");
             System.out.println("P) Make Payment (Debit)");
             System.out.println("L) Ledger");
@@ -37,9 +38,10 @@ public class transactionTrackerApp {
             }
         }
     }
+
     private static void addTransaction(boolean addDeposit) {
         System.out.println(addDeposit ? "Add Deposit" : "Make Payment");
-        System.out.print(" Provide Description: ");
+        System.out.print("Provide Description: ");
         String description = scanner.nextLine();
 
         System.out.print("Provide Vendor: ");
@@ -47,18 +49,18 @@ public class transactionTrackerApp {
 
         System.out.print("Provide Amount: ");
         double amount = Double.parseDouble(scanner.nextLine());
-
+        // ensures negative payments go through
         if (!addDeposit && amount > 0) {
             amount = -amount;
-        }// Ensure negative for payments
+        }
 
-        transaction transaction = new transaction(LocalDate.now(), LocalTime.now(), description, vendor, amount);
-        transactionGuide.saveTransaction(transaction);
+        Transaction transaction = new Transaction(LocalDate.now(), LocalTime.now(), description, vendor, amount);
+        TransactionGuide.saveTransaction(transaction);
         System.out.println("Saved Successfully!");
     }
 
     private static void showLedger() {
-        List<transaction> transactions = transactionGuide.readTransactions();
+        List<Transaction> transactions = TransactionGuide.readTransactions();
 
         while (true) {
             System.out.println("Ledger Menu:");
@@ -71,30 +73,37 @@ public class transactionTrackerApp {
             String choice = scanner.nextLine().trim().toUpperCase();
 
             switch (choice) {
-                case "A": displayTransactions(transactions, t -> true);
-                break;
-                case "D": displayTransactions(transactions, t -> t.getAmount() > 0);
-                break;
-                case "P": displayTransactions(transactions, t -> t.getAmount() < 0);
-                break;
-                case "R": showReports(transactions);
-                break;
+                case "A":
+                    displayTransactions(transactions, t -> true);
+                    break;
+                case "D":
+                    displayTransactions(transactions, t -> t.getAmount() > 0);
+                    break;
+                case "P":
+                    displayTransactions(transactions, t -> t.getAmount() < 0);
+                    break;
+                case "R":
+                    showReports(transactions);
+                    break;
                 case "H":
                     return;
-                default: System.out.println("Invalid choice, Try Again!");
+                default:
+                    System.out.println("Invalid choice, Try Again!");
             }
         }
     }
 
-    private static void displayTransactions(List<transaction> list, java.util.function.Predicate<transaction> filter) {
-        System.out.println("\n--- Transactions ---");
+    private static void displayTransactions(List<Transaction> list, java.util.function.Predicate<Transaction> filter) {
+        System.out.println("Transactions..");
         list.stream()
-                .filter(filter)
-                .sorted(Comparator.comparing(transaction::getDate).reversed())
-                .forEach(System.out::println);
+                .filter(filter)// filters items that match the condition
+                .sorted(Comparator.comparing(Transaction::getDate) //sorts get date first then prints each transaction
+                        .thenComparing(Transaction::getTime)
+                        .reversed())
+                .forEach(System.out::println);// :: reference operator
     }
 
-    private static void showReports(List<transaction> transactions) {
+    private static void showReports(List<Transaction> transactions) {
         while (true) {
             System.out.println("Reports");
             System.out.println("1 - Month To Date");
@@ -105,19 +114,21 @@ public class transactionTrackerApp {
             System.out.println("0 - Back to Ledger");
             System.out.print("Enter your choice: ");
 
-            String choice = transactionTrackerApp.scanner.nextLine().trim();
+            String choice = scanner.nextLine().trim();
             LocalDate today = LocalDate.now();
 
             switch (choice) {
                 case "1":
                     displayTransactions(transactions, t ->
-                            t.getDate().getMonth() == today.getMonth() &&
+                            t.getDate().getMonth() == today.getMonth() &
                                     t.getDate().getYear() == today.getYear());
+                //current month to date transactions
                     break;
                 case "2":
                     YearMonth prevMonth = YearMonth.now().minusMonths(1);
                     displayTransactions(transactions, t ->
                             YearMonth.from(t.getDate()).equals(prevMonth));
+                    //checks if the transaction's month and year match the previous month.
                     break;
                 case "3":
                     displayTransactions(transactions, t ->
@@ -126,14 +137,16 @@ public class transactionTrackerApp {
                 case "4":
                     displayTransactions(transactions, t ->
                             t.getDate().getYear() == today.getYear() - 1);
+                    //checks if the transaction's year is one less than the current year
                     break;
                 case "5":
                     System.out.print("Search for Vendor Name: ");
                     String vendor = scanner.nextLine().toLowerCase();
                     displayTransactions(transactions, t ->
                             t.getVendor().toLowerCase().contains(vendor));
+                    //filters transactions where the vendor's name contains the input string.
                     break;
-                case "0":
+                case "0": //back to ledger
                     return;
                 default:
                     System.out.println("Invalid.");

@@ -1,35 +1,33 @@
 package com.pluralsight;
-
 import java.io.*;
 import java.util.*;
 
-// This class handles loading and saving transactions to/from a CSV file
-public class transactionGuide {
+public class TransactionGuide {
     private static final String fileName = "transactions.csv";
 
     // Reads all transactions from the CSV file into a list
-    public static List<transaction> readTransactions() {
-        List<transaction> transactions = new ArrayList<>();
+    public static List<Transaction> readTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
         File file = new File(fileName);
         if (!file.exists()) return transactions;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
-            // Read each line until we reach the end of the file
             while ((line = reader.readLine()) != null) {
-                // Convert the CSV line into a Transaction object
-                transactions.add(transaction.FromCsv(line));
+                try {
+                    transactions.add(Transaction.fromCsv(line));
+                } catch (Exception e) {
+                    System.out.println("Saved: " + line);
+                }
             }
         } catch (IOException e) {
-            // Handle any error that occurs while trying to read the file
             System.out.println("Error reading transactions: " + e.getMessage());
         }
-
         return transactions;
     }
 
     // Appends a new transaction to the CSV file
-    public static void saveTransaction(transaction t) {
+    public static void saveTransaction(Transaction t) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
             writer.write(t.toCsv());
             writer.newLine();
@@ -38,3 +36,4 @@ public class transactionGuide {
         }
     }
 }
+
